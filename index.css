@@ -1,0 +1,57 @@
+body {
+    margin-top: 5em;
+    margin-bottom: 5em;
+}
+
+.heading {
+    margin-top: 3em;
+    margin-bottom: 3em;
+}
+
+.introduction {
+    padding-left: 6em;
+    padding-right: 6em;
+    margin-bottom: 2em;
+}
+
+.fieldsContainer {
+  display: none;
+  padding: 1em 3em 0em;
+}
+
+.show {
+  display: block;
+  opacity:0;
+}
+
+.animated {
+    animation: appear 2s;
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+}
+
+@keyframes appear {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+::placeholder {
+  color: #B6B6B6 !important;
+}
+
+#collapseIntroductionText {
+    opacity: 1 !important;
+}
+
+#introductionToggle {
+    text-decoration: none;
+}
+
+#visualization {
+    margin-top: 2em;
+    margin-bottom: 2em;
+}

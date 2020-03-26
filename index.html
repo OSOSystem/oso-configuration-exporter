@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>Configuration Exporter</title>
+        <link rel="stylesheet"
+              href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+              integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+              crossorigin="anonymous">
+        <link rel="stylesheet" href="index.css">
+    </head>
+    <body class="bg-light">
+        <div class="container">
+            <div class="heading text-center">
+                <h2>Configuration Exporter</h2>
+                <p class="lead">Create a configuration for a device you want OSO to support</p>
+            </div>
+            <div class="introduction">
+                <div class="card">
+                    <div class="card-header">
+                        <a id="introductionToggle" href="#collapseIntroductionText" class="text-secondary"
+                           data-toggle="collapse"
+                           aria-controls="collapseIntroductionText"
+                           aria-expanded="false">
+                            How does it work?
+                        </a>
+                    </div>
+                    <div id="collapseIntroductionText" class="collapse card-body">
+                        <p class="card-text text-justify">
+                            This exporter aims to help you to write a configuration file for the OSO project.
+                            Instead of programming each device to our backend, we tried to simply the process
+                            by making use of an web-ui. Every input needs to filled out except the optional ones.
+                        </p>
+                        <div>
+                            A device typically sends out an emergency or position update as a message which is structured differently.
+                            To extract relevant information we need to identify this device in the OSO backend.
+                            As you are going to write the configuration here are some notes
+                            <ul>
+                                <li>The message is split apart by the separators you supply</li>
+                                <li>Accessing the parts of the split message is done via index.<br>
+                                    The parts are referenced with <code>field[x]</code> where is x is a number > 0
+                                <li>For capturing other relevant parts of a field you can use regular expressions</li>
+                            </ul>
+                            For helping you out identifying the fields, you can paste an example message of the device your are trying to add.<br>
+                            After everything is filled out the only thing left to do is downloading the configuration
+                            and making a Pull Request to <a href="#">oso-configuration-scanner</a>.<br><br>
+                            The following table describes the required inputs
+                        </div>
+                        <table class="table table-borderless">
+                            <thead>
+                            <tr>
+                                <th scope="col">Input</th>
+                                <th scope="col">Description</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Name</td>
+                                <td>Name of the device you want to support</td>
+                            </tr>
+                            <tr>
+                                <td>Separators</td>
+                                <td>Splits a message into fields, which are used to extract the information from in other input boxes.
+                                    If a space is used as a separator just input a space in the input-box</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div id="visualization">
+                <div class="form-group mb-3">
+                    <label for="message">
+                        <span class="text-muted">Visualization</span>
+                        <small class="form-text text-muted">
+                            Visualize the corresponding fields for a message by applying the separators
+                        </small>
+                    </label>
+                    <textarea class="form-control" id="message" rows="3" placeholder="sos;lat:52.268157;lng:11.074219;id:515258930"></textarea>
+                </div>
+
+                <div class="fieldsContainer">
+                    <code id="fieldSamples">
+                    </code>
+                </div>
+            </div>
+            <hr>
+            <form class="needs-validation" onsubmit="download()" novalidate>
+                <div class="form-row mb-3">
+                    <div class="col">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" class="form-control" placeholder="device" required>
+                        <div class="invalid-feedback">
+                            Name is required
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label for="separators" data-toggle="tooltip" data-placment="top" title="Tooltip">
+                            <span>Separators</span>
+                        </label>
+                        <input type="text" id="separators" class="form-control" placeholder=";_:\,-." required>
+                        <div class="invalid-feedback">
+                            One or multiple Separators are required
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row mb-3">
+                    <div class="col">
+                        <label for="id">
+                            Id <code><span class="text-muted">field[<span id="idCounter"></span>]</span></code>
+                        </label>
+                        <input type="number" id="id" class="form-control" min="0" required>
+                        <div class="invalid-feedback">
+                            Select an index for the field id
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label class="text-muted" for="id_regex">
+                            Capture Id for <code><span class="text-muted">field[<span id="idCounterCopy"></span>]</span></code> via Regex (Optional)
+                        </label>
+                        <input type="text" id="id_regex" class="form-control" placeholder="[a-zA-Z0-9]+">
+                    </div>
+                </div>
+                <div class="form-row mb-3">
+                    <div class="col">
+                        <label for="id_length">Id Length</label>
+                        <input type="number" id="id_length" class="form-control" min="0" required>
+                        <div class="invalid-feedback">
+                            Specify the length of the id
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label for="field_count">Field Count</label>
+                        <input type="number" id="field_count" class="form-control" min="0" required>
+                        <div class="invalid-feedback">
+                            Specify the total field count
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row mb-3">
+                    <div class="col">
+                        <label for="sendType">Send Type</label>
+                        <select class="form-control" id="sendType" required>
+                            <option>Emergency</option>
+                            <option>Update</option>
+                            <option>Geofencing</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label for="transport">Transport</label>
+                        <select class="form-control" id="transport" required>
+                            <option>*</option>
+                            <option>HTTP</option>
+                            <option>SMS</option>
+                            <option>TCP</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row mb-3">
+                    <div class="col">
+                        <label for="replyChannel">Reply Channel</label>
+                        <select class="form-control" id="replyChannel">
+                            <option>Nothing</option>
+                            <option>Call</option>
+                            <option>SMS</option>
+                            <option>Message</option>
+                        </select>
+                    </div>
+                    <div class="col">
+                        <label class="text-muted" for="messageHandle">Capture Message Handle via Regex (Optional)</label>
+                        <input type="text" id="messageHandle" class="form-control" placeholder="[a-zA-Z0-9]+">
+                    </div>
+                </div>
+                <hr>
+                <div class="form-row mb-3">
+                    <div class="col">
+                        <label for="latitude">
+                            Latitude <code><span class="text-muted">field[<span id="latitudeCounter"></span>]</span></code>
+                        </label>
+                        <input type="number" id="latitude" class="form-control" min="0" required>
+                        <div class="invalid-feedback">
+                            Select an index for the field latitude
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label class="text-muted" for="latitude_regex">
+                            Capture Latitude for <code><span class="text-muted">field[<span id="latitudeCounterCopy"></span>]</span></code> via Regex (Optional)
+                        </label>
+                        <input type="text" id="latitude_regex" class="form-control" placeholder="[a-zA-Z0-9]+">
+                    </div>
+                </div>
+                <div class="form-row mb-3">
+                    <div class="col">
+                        <label for="longitude">
+                            Longitude <code><span class="text-muted">field[<span id="longitudeCounter"></span>]</span></code>
+                        </label>
+                        <input type="number" id="longitude" class="form-control" min="0" required>
+                        <div class="invalid-feedback">
+                            Select an index for the field longitude
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label class="text-muted" for="longitude_regex">
+                            Capture Longitude for <code><span class="text-muted">field[<span id="longitudeCounterCopy"></span>]</span></code> via Regex (Optional)
+                        </label>
+                        <input type="text" id="longitude_regex" class="form-control" placeholder="[a-zA-Z0-9]+">
+                    </div>
+                </div>
+                <div class="form-check mb-3">
+                    <div class="text-center">
+                        <input type="checkbox" class="form-check-input" id="DMS">
+                        <label class="form-check-label" for="DMS">Convert Latitude/Longitude from DMS</label>
+                    </div>
+                </div>
+                <hr>
+                <div class="form-group mb-3">
+                    <label for="description">
+                        <span class="text-muted">Description (Optional)</span>
+                        <small class="form-text text-muted">
+                            This is used for generating an automated documentation
+                        </small>
+                    </label>
+                    <textarea id="description" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group mb-3" id="json">
+                    <label>
+                        <span class="text-muted">Additional Configuration (Optional)</span>
+                        <small class="form-text text-muted">
+                            Key and Values are going to be saved as JSON in the configuration file.<br>
+                            If you want to access values from the message you can do it with: <code>fields[x]</code>
+                        </small>
+                    </label>
+                    <div class="form-row pb-2" id="row_0">
+                        <div class="col-5">
+                            <input type="text" id="key_0" class="form-control" placeholder="key">
+                        </div>
+                        <div class="col-1 text-center">
+                            <span>:</span>
+                        </div>
+                        <div class="col-5">
+                            <input type="text" id="value_0" class="form-control" placeholder="value">
+                        </div>
+                        <div class="col-1 text-center">
+                            <button type="button" id="addBtn_0" class="btn btn-success w-100" onclick="addOptionalRow(this.id)">
+                                +
+                            </button>
+                            <button type="button" id="remBtn_0" class="btn btn-danger w-100" onclick="removeOptionalRow(this.id)"
+                                    style="display: none;">
+                                -
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="form-row">
+                    <div class="col-5"></div>
+                    <div class="col-2">
+                        <button type="submit" class="btn btn-primary btn-block">Export</button>
+                    </div>
+                    <div class="col-5"></div>
+                </div>
+            </form>
+            <div class="mb-4"></div>
+        </div>
+
+        <script src="index.js"></script>
+        <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    </body>
+</html>
