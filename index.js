@@ -53,7 +53,7 @@ function download() {
     const latitudeRegex = document.querySelector("#latitude_regex").value;
     const longitudeRegex = document.querySelector("#longitude_regex").value;
     const messageHandle = document.querySelector("#messageHandle").value;
-    const description = document.querySelector("#longitude_regex").value;
+    const description = document.querySelector("#description").value;
     const json = constructJson();
     console.log(json);
 
